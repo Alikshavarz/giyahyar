@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-9-6@+5t1%vl)vz&zf0i+o1ppi-+&63l!2*8m6m7g=k)3dba2g*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['yourdomain.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
+    # app_name
     'users',
 ]
 
@@ -74,10 +76,15 @@ WSGI_APPLICATION = 'giyahyar.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+#
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'giyahyar_db',
+        'USER': 'maryam',
+        'PASSWORD': 'maryam77',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
