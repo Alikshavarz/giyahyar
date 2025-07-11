@@ -2,6 +2,9 @@ from django.db import models
 # from users.models import User
 from datetime import timedelta, date
 
+#🌿 =========================================================
+
+
 class Plant(models.Model):
     # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='plants')
     name = models.CharField(max_length=100)
@@ -36,6 +39,7 @@ class Plant(models.Model):
         self.update_next_watering()
 
 
+#🦠 =======================================================
 
 class PlantDiagnosis(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='diagnoses')
@@ -61,3 +65,28 @@ class PlantDiagnosis(models.Model):
 
     def __str__(self):
         return f"Diagnosis for {self.plant.name} - {self.created_at.strftime('%Y-%m-%d')}"
+
+
+
+
+#💧 ======================================================
+
+
+class WateringLog(models.Model):
+    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='watering_logs')
+    watered_at = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True, help_text="توضیح اختیاری درباره آبیاری (مثلاً نوع آب یا شرایط خاص)")
+
+    class Meta:
+        ordering = ['-watered_at']
+
+    def __str__(self):
+        return f"{self.plant.name} watered on {self.watered_at.strftime('%Y-%m-%d %H:%M')}"
+
+    def mark_watered_today(self):
+        self.last_watered = date.today() # ثبت می‌کنه که امروز گیاه آبیاری شده
+        self.update_next_watering()  # با توجه به watering_frequency، زمان آبیاری بعدی رو محاسبه می‌کنه
+
+        self.save() # تغییرات رو در دیتابیس ذخیره می‌کنه
+        WateringLog.objects.create(plant=self)   # یک رکورد جدید در جدول WateringLog می‌سازه تا این آبیاری در تاریخچه ثبت بشه
+
