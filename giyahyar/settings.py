@@ -45,12 +45,16 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+<<<<<<< HEAD
     'drf_yasg',
+=======
+    'phonenumber_field',
+>>>>>>> e33554fe9d596c1c0a37f641c728efbb20a946b6
 
 
     # app_name
     'users',
-    'plants'
+    'plants',
 ]
 
 
@@ -127,6 +131,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
