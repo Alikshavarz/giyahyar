@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Plant, PlantDiagnosis
+from .models import Plant, PlantDiagnosis, WateringLog
 
 class PlantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,3 +45,21 @@ class PlantDiagnosisSerializer(serializers.ModelSerializer):
             'created_at',
         )
         read_only_fields = ('diagnosis', 'category', 'confidence', 'care_instructions', 'created_at')
+
+
+
+
+class WateringLogSerializer(serializers.ModelSerializer):
+    plant_name = serializers.CharField(source='plant.name', read_only=True)
+
+    class Meta:
+        model = WateringLog
+        fields = (
+            'id',
+            'plant',
+            'plant_name',
+            'watered_at',
+            'note',
+        )
+        read_only_fields = ('id', 'watered_at', 'plant_name')
+

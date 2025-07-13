@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Plant, PlantDiagnosis
+from .models import Plant, PlantDiagnosis, WateringLog
 
+# ==========================
+# 🔧 Base Admin with Image Preview
+# ==========================
 class BaseAdmin(admin.ModelAdmin):
     @admin.display(description='Image Preview')
     def image_preview(self, obj):
@@ -9,11 +12,40 @@ class BaseAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="width: 100px; height: auto;" />', obj.image.url)
         return ""
 
+# ==========================
+# 🌿 Inline: Watering Log
+# ==========================
+class WateringLogInline(admin.TabularInline):
+    model = WateringLog
+    extra = 0
+    readonly_fields = ('watered_at',)
+    ordering = ('-watered_at',)
+
+# ==========================
+# 🌱 Inline: Plant Diagnosis
+# ==========================
+class PlantDiagnosisInline(admin.TabularInline):
+    model = PlantDiagnosis
+    extra = 0
+    readonly_fields = (
+        'created_at',
+        'diagnosis',
+        'category',
+        'confidence',
+        'care_instructions',
+        'image_preview',
+    )
+    ordering = ('-created_at',)
+    can_delete = True
+    show_change_link = True
+
+# ==========================
+# 🌼 Admin: Plant
+# ==========================
 class PlantAdmin(BaseAdmin):
     list_display = (
         'name',
         'species',
-        # 'user',
         'uploaded_at',
         'watering_frequency',
         'last_watered',
@@ -21,11 +53,14 @@ class PlantAdmin(BaseAdmin):
         'is_active',
         'image_preview',
     )
-    # search_fields = ('name', 'species', 'user__username')
     list_filter = ('uploaded_at', 'is_active')
     list_editable = ('watering_frequency', 'is_active')
     readonly_fields = ('image_preview', 'uploaded_at', 'next_watering')
+    inlines = [WateringLogInline, PlantDiagnosisInline]
 
+# ==========================
+# 🦠 Admin: Plant Diagnosis
+# ==========================
 class PlantDiagnosisAdmin(BaseAdmin):
     list_display = (
         'plant',
@@ -36,7 +71,27 @@ class PlantDiagnosisAdmin(BaseAdmin):
     )
     search_fields = ('diagnosis', 'plant__name')
     list_filter = ('category', 'created_at')
-    readonly_fields = ('image_preview', 'created_at', 'diagnosis', 'care_instructions', 'confidence')
+    readonly_fields = (
+        'image_preview',
+        'created_at',
+        'diagnosis',
+        'care_instructions',
+        'confidence',
+    )
 
+# ==========================
+# 💧 Admin: Watering Log
+# ==========================
+class WateringLogAdmin(admin.ModelAdmin):
+    list_display = ('plant', 'watered_at', 'note')
+    list_filter = ('watered_at',)
+    search_fields = ('plant__name', 'note')
+    ordering = ('-watered_at',)
+    autocomplete_fields = ('plant',)
+
+# ==========================
+# ✅ Register Models
+# ==========================
 admin.site.register(Plant, PlantAdmin)
 admin.site.register(PlantDiagnosis, PlantDiagnosisAdmin)
+admin.site.register(WateringLog, WateringLogAdmin)

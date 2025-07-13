@@ -5,6 +5,8 @@ from .views import (
     PlantDiagnosisListCreateView,
     PlantDiagnosisRetrieveUpdateDestroyView,
     PlantImageUploadView,
+    WateringLogCreateView,
+    WateringLogListView
 )
 
 urlpatterns = [
@@ -22,4 +24,11 @@ urlpatterns = [
 
     # مشاهده، ویرایش یا حذف یک تشخیص خاص
     path('diagnoses/<int:pk>/', PlantDiagnosisRetrieveUpdateDestroyView.as_view(), name='diagnosis-detail'),
+
+    # ثبت آبیاری جدید برای یک گیاه خاص
+    path('plants/<int:pk>/water/', WateringLogCreateView.as_view(), name='plant-water'),
+
+    # نمایش تاریخچه آبیاری برای یک گیاه خاص
+    path('plants/<int:pk>/watering-history/', WateringLogListView.as_view(), name='watering-history'),
+
 ]
