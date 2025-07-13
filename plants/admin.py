@@ -33,7 +33,7 @@ class PlantDiagnosisInline(admin.TabularInline):
         'category',
         'confidence',
         'care_instructions',
-        'image_preview',
+
     )
     ordering = ('-created_at',)
     can_delete = True
@@ -54,6 +54,7 @@ class PlantAdmin(BaseAdmin):
         'image_preview',
     )
     list_filter = ('uploaded_at', 'is_active')
+    search_fields = ['name', 'species']
     list_editable = ('watering_frequency', 'is_active')
     readonly_fields = ('image_preview', 'uploaded_at', 'next_watering')
     inlines = [WateringLogInline, PlantDiagnosisInline]
@@ -72,7 +73,6 @@ class PlantDiagnosisAdmin(BaseAdmin):
     search_fields = ('diagnosis', 'plant__name')
     list_filter = ('category', 'created_at')
     readonly_fields = (
-        'image_preview',
         'created_at',
         'diagnosis',
         'care_instructions',
