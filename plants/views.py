@@ -89,6 +89,9 @@ class WateringLogCreateView(generics.CreateAPIView):
     serializer_class = WateringLogSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return WateringLog.objects.all()
+
     def perform_create(self, serializer):
         plant_id = self.kwargs['pk']
         try:
