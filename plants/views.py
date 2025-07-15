@@ -1,5 +1,5 @@
-from .models import Plant, PlantDiagnosis, WateringLog
-from .serializers import PlantSerializer, PlantDiagnosisSerializer, WateringLogSerializer
+from .models import Plant, PlantDiagnosis, WateringLog, WateringSchedule
+from .serializers import PlantSerializer, PlantDiagnosisSerializer, WateringLogSerializer, WateringScheduleSerializer
 from giyahyar.utils import diagnose_plant  # فرض بر این است که این تابع تشخیص گیاه را انجام می‌دهد
 from rest_framework.exceptions import NotFound
 from rest_framework import serializers
@@ -115,4 +115,25 @@ class WateringLogListView(generics.ListAPIView):
     def get_queryset(self):
         plant_id = self.kwargs['pk']
         return WateringLog.objects.filter(plant__id=plant_id, plant__user=self.request.user)
+
+
+# ===================================================
+
+
+class WateringScheduleListCreateView(generics.ListCreateAPIView):
+    queryset = WateringSchedule.objects.all()
+    serializer_class = WateringScheduleSerializer
+
+    def perform_create(self, serializer):
+        # ایجاد آب‌دادن و وظیفه زمان‌بندی آن
+        serializer.save()
+
+
+class WateringScheduleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WateringSchedule.objects.all()
+    serializer_class = WateringScheduleSerializer
+
+    def perform_update(self, serializer):
+        # به‌روزرسانی آب‌دادن و وظیفه زمان‌بندی آن
+        serializer.save()
 

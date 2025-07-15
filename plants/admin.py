@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Plant, PlantDiagnosis, WateringLog
+from .models import Plant, PlantDiagnosis, WateringLog, WateringSchedule
 
 # ==========================
 # 🔧 Base Admin with Image Preview
@@ -90,8 +90,21 @@ class WateringLogAdmin(admin.ModelAdmin):
     autocomplete_fields = ('plant',)
 
 # ==========================
+# 💧 Admin: WateringSchedule
+
+# =========================
+
+class WateringScheduleAdmin(admin.ModelAdmin):
+    list_display = ('plant', 'frequency', 'schedule')
+    search_fields = ('plant__name',)
+    # برای افزودن قابلیت فیلتر کردن
+    list_filter = ('frequency',)
+
+
+
 # ✅ Register Models
 # ==========================
 admin.site.register(Plant, PlantAdmin)
 admin.site.register(PlantDiagnosis, PlantDiagnosisAdmin)
 admin.site.register(WateringLog, WateringLogAdmin)
+admin.site.register(WateringSchedule, WateringScheduleAdmin)

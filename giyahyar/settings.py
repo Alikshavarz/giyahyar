@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_celery_beat',
 
     'drf_yasg',
     'phonenumber_field',
@@ -75,6 +76,20 @@ REST_FRAMEWORK = {
 }
 
 
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # یا هر بروکر دیگری که استفاده می‌کنید
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Tehran'  # به timezone خود تغییر دهید
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
 ROOT_URLCONF = 'giyahyar.urls'
 
 TEMPLATES = [
@@ -102,7 +117,7 @@ WSGI_APPLICATION = 'giyahyar.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'giyahyar_db',
+        'NAME': 'giyahyar',
         'USER': 'maryam',
         'PASSWORD': 'maryam77',
         'HOST': 'localhost',

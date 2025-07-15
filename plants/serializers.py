@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Plant, PlantDiagnosis, WateringLog
+from .models import Plant, PlantDiagnosis, WateringLog, WateringSchedule
 
 class PlantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,3 +63,37 @@ class WateringLogSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'watered_at', 'plant_name')
 
+    def create(self, validated_data):
+        # ایجاد لاگ جدید
+        watering_log = super().create(validated_data)
+        watering_log.mark_watered_today()  # ثبت آبیاری در گیاه
+        return watering_log
+
+
+class WateringScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WateringSchedule
+        fields = (
+            'plant',
+            'frequency',
+            'schedule',
+        )
+
+        read_only_fields = ('schedule',)  # فقط خواندنی، زیرا این وظیفه به‌صورت خودکار ایجاد می‌شود
+
+    def create(self, validated_data):
+        # ایجاد آب‌دادن جدید
+        watering_schedule = WateringSchedule(**validated_data)
+        watering_schedule.create_schedule()  # ایجاد وظیفه زمان‌بندی برای آب‌دادن
+        watering_schedule.save()  # ذخیره مدل
+        return watering_schedule
+
+    def update(self, instance, validated_data):
+        # بروزرسانی فرکانس اگر تغییر کند
+        frequency = validated_data.get('frequency', instance.frequency)
+        instance.frequency = frequency
+
+        if instance.frequency != frequency:
+            instance.create_schedule()  # در صورت تغییر فرکانس، وظیفه زمان‌بندی را به‌روزرسانی کنید
+        instance.save()  # ذخیره تغییرات
+        return instance
