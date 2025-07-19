@@ -87,7 +87,8 @@ class PlantDiagnosis(models.Model):
 
 
 # ======================================================
-class WateringLog(models.Model):
+class WateringLog(models.Model):    #  برای ثبت سوابق آبیاری گیاهان و داده‌های تاریخی استفاده می‌شود
+
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='watering_logs', verbose_name=_("Plant"))
     watered_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Watered At"))
     note = models.TextField(blank=True,
@@ -104,7 +105,7 @@ class WateringLog(models.Model):
 
 
 # ======================================================
-class WateringSchedule(models.Model):
+class WateringSchedule(models.Model):  #  برای مدیریت و تعیین زمان‌بندی آبیاری و ایجاد تسک‌های خودکار برای آبیاری گیاهان طراحی شده است.
     plant = models.OneToOneField(Plant, on_delete=models.CASCADE, related_name='watering_schedule',
                                  verbose_name=_("Plant"))
     frequency = models.IntegerField(help_text=_("Watering frequency in days"), verbose_name=_("Frequency"))
