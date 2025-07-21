@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     # app_name
     'users',
     'plants',
+    'subscription',
 ]
 
 
