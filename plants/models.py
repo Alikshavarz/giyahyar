@@ -2,25 +2,41 @@ from django.db import models
 from datetime import timedelta, date
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings  # برای ارجاع به مدل User
 
 
-# 🌿 =========================================================
-
+# =========================================================
 class Plant(models.Model):
-    name = models.CharField(max_length=100)
-    species = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='plants/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # ارجاع به مدل User پیش‌فرض جنگو (یا مدل User کاستوم شما)
+        on_delete=models.CASCADE,  # وقتی کاربر حذف شد، گیاهانش هم حذف شوند
+        related_name='plants',  # برای دسترسی از User به گیاهانش (user.plants.all())
+        verbose_name=_("User"),
+        # **اینجا تغییر اصلی است:**
+        # وقتی فیلد user را به مدل Plant اضافه می‌کنیم و از قبل در دیتابیس داده داریم،
+        # Django نمی‌داند این فیلد جدید را برای داده‌های موجود چه مقداری بگذارد.
+        # پس باید یک مقدار پیش‌فرض یک‌باره (one-off default) یا دائمی تعیین کنیم.
+        # 'default=1' به این معنی است که تمام گیاهان موجود (هنگام اجرای migrate) به کاربری با ID=1 اختصاص داده شوند.
+        # فرض بر این است که شما یک کاربر (معمولا ادمین) با ID=1 دارید.
+        default=1
+    )
+    name = models.CharField(max_length=100, verbose_name=_("Plant Name"))
+    species = models.CharField(max_length=100, blank=True, verbose_name=_("Species"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    image = models.ImageField(upload_to='plants/', verbose_name=_("Image"))
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Uploaded At"))
 
     # آبیاری
-    watering_frequency = models.IntegerField(default=7, help_text="How often to water (in days)")
-    last_watered = models.DateField(null=True, blank=True)
-    next_watering = models.DateField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
+    watering_frequency = models.IntegerField(default=7, help_text=_("How often to water (in days)"),
+                                             verbose_name=_("Watering Frequency"))
+    last_watered = models.DateField(null=True, blank=True, verbose_name=_("Last Watered"))
+    next_watering = models.DateField(null=True, blank=True, verbose_name=_("Next Watering"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Active"))
 
     class Meta:
         ordering = ['-uploaded_at']
+        verbose_name = _("Plant")
+        verbose_name_plural = _("Plants")
 
     def __str__(self):
         return self.name
@@ -29,87 +45,100 @@ class Plant(models.Model):
         """محاسبه زمان آبیاری بعدی بر اساس آخرین آبیاری و فاصله آبیاری"""
         if self.last_watered and self.watering_frequency:
             self.next_watering = self.last_watered + timedelta(days=self.watering_frequency)
-            self.save()
+        else:
+            self.next_watering = None  # اگر اطلاعات کافی نیست، زمان بعدی مشخص نیست
+        self.save(update_fields=['next_watering'])  # فقط فیلد next_watering را ذخیره کن
 
-    def mark_watered_today(self):
-        """ثبت آبیاری امروز و به‌روزرسانی زمان بعدی"""
+    def mark_watered_today(self, note=""):
+        """ثبت آبیاری امروز و به‌روزرسانی زمان بعدی و ثبت لاگ"""
         self.last_watered = date.today()
-        self.update_next_watering()
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if not hasattr(self, 'watering_schedule'):
-            watering_schedule = WateringSchedule(plant=self, frequency=self.watering_frequency)
-            watering_schedule.create_schedule()
+        self.update_next_watering()  # این متد خودش save می‌کند
+        WateringLog.objects.create(plant=self, note=note)  # یک رکورد جدید در جدول WateringLog می‌سازد
 
 
-# 🦠 =======================================================
-
+# =======================================================
 class PlantDiagnosis(models.Model):
-    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='diagnoses')
-    image = models.ImageField(upload_to='diagnoses/')
-    diagnosis = models.TextField()
+    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='diagnoses', verbose_name=_("Plant"))
+    image = models.ImageField(upload_to='diagnoses/', verbose_name=_("Diagnosis Image"))
+    diagnosis = models.TextField(verbose_name=_("Diagnosis Result"))
     category = models.CharField(
         max_length=50,
         choices=[
-            ('fungus', 'Fungus'),
-            ('pest', 'Pest'),
-            ('watering', 'Watering'),
-            ('light', 'Light'),
-            ('other', 'Other')
+            ('fungus', _('Fungus')),
+            ('pest', _('Pest')),
+            ('watering', _('Watering')),
+            ('light', _('Light')),
+            ('other', _('Other'))
         ],
-        default='other'
+        default='other',
+        verbose_name=_("Category")
     )
-    confidence = models.FloatField(default=0.0)
-    care_instructions = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    confidence = models.FloatField(default=0.0, verbose_name=_("Confidence"))
+    care_instructions = models.TextField(verbose_name=_("Care Instructions"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = _("Plant Diagnosis")
+        verbose_name_plural = _("Plant Diagnoses")
 
     def __str__(self):
         return f"Diagnosis for {self.plant.name} - {self.created_at.strftime('%Y-%m-%d')}"
 
 
-# 💧 ======================================================
+# ======================================================
+class WateringLog(models.Model):    #  برای ثبت سوابق آبیاری گیاهان و داده‌های تاریخی استفاده می‌شود
 
-class WateringLog(models.Model):
-    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='watering_logs')
-    watered_at = models.DateTimeField(auto_now_add=True)
-    note = models.TextField(blank=True, help_text="توضیح اختیاری درباره آبیاری (مثلاً نوع آب یا شرایط خاص)")
+    plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name='watering_logs', verbose_name=_("Plant"))
+    watered_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Watered At"))
+    note = models.TextField(blank=True,
+                            help_text=_("Optional note about watering (e.g., water type or special conditions)"),
+                            verbose_name=_("Note"))
 
     class Meta:
         ordering = ['-watered_at']
+        verbose_name = _("Watering Log")
+        verbose_name_plural = _("Watering Logs")
 
     def __str__(self):
         return f"{self.plant.name} watered on {self.watered_at.strftime('%Y-%m-%d %H:%M')}"
 
-    def mark_watered_today(self):
-        """ثبت آبیاری امروز و به‌روزرسانی زمان بعدی"""
-        self.plant.last_watered = date.today()  # ثبت می‌کند که امروز گیاه آبیاری شده
-        self.plant.update_next_watering()  # با توجه به watering_frequency، زمان آبیاری بعدی را محاسبه می‌کند
-        self.plant.save()  # تغییرات را در دیتابیس ذخیره می‌کند
-        WateringLog.objects.create(plant=self.plant)  # یک رکورد جدید در جدول WateringLog می‌سازد
 
-
-# 🌊 ======================================================
-
-class WateringSchedule(models.Model):
-    plant = models.OneToOneField(Plant, on_delete=models.CASCADE, related_name='watering_schedule')
-    frequency = models.IntegerField(help_text="آبیاری هر چند روز یک‌بار")  # مقدار روزها
-    schedule = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, null=True, blank=True)
+# ======================================================
+class WateringSchedule(models.Model):  #  برای مدیریت و تعیین زمان‌بندی آبیاری و ایجاد تسک‌های خودکار برای آبیاری گیاهان طراحی شده است.
+    plant = models.OneToOneField(Plant, on_delete=models.CASCADE, related_name='watering_schedule',
+                                 verbose_name=_("Plant"))
+    frequency = models.IntegerField(help_text=_("Watering frequency in days"), verbose_name=_("Frequency"))
+    schedule = models.OneToOneField(PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True,
+                                    verbose_name=_("Periodic Task Schedule"))  # Changed to SET_NULL for robustness
 
     def create_schedule(self):
-        """ایجاد زمان‌بندی جدید برای آبیاری"""
-        # ایجاد یا بازیابی یک زمان‌بندی جدید
+        """ایجاد یا به‌روزرسانی زمان‌بندی Celery Beat برای آبیاری."""
+        import json  # Import json inside the method
+
+        # اگر از قبل زمان‌بندی وجود دارد، آن را حذف کن
+        if self.schedule:
+            self.schedule.delete()
+
         schedule, created = IntervalSchedule.objects.get_or_create(every=self.frequency, period=IntervalSchedule.DAYS)
+
         task = PeriodicTask.objects.create(
             interval=schedule,
-            name=f"Water {self.plant.name}",
-            task='tasks.water_plants'  # اطمینان حاصل کنید که مسیر به درستی مشخص شده است
+            name=f"Water {self.plant.name} (Plant ID: {self.plant.id})",
+            task='notifications.tasks.water_plants',
+            kwargs=json.dumps({'plant_id': self.plant.id}),
+            enabled=True,
+            one_off=False,
+            start_time=self.plant.next_watering or date.today()
         )
         self.schedule = task
         self.save()
 
     def __str__(self):
         return f"{self.plant.name} watering schedule every {self.frequency} days"
+
+    # اضافه کردن متد delete برای حذف PeriodicTask هنگام حذف WateringSchedule
+    def delete(self, *args, **kwargs):
+        if self.schedule:
+            self.schedule.delete()
+        super().delete(*args, **kwargs)

@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'users',
     'plants',
     'subscription',
+    'notifications',
+
 ]
 
 
@@ -83,10 +85,10 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # یا هر بروکر دیگری که استفاده می‌کنید
+CELERY_BROKER_URL = 'redis://localhost:6379/0' 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Tehran'  # به timezone خود تغییر دهید
+CELERY_TIMEZONE = 'Asia/Tehran'  
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
