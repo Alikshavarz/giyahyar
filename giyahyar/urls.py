@@ -7,7 +7,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 
-# Swagger/OpenAPI schema configuration
+# Swagger
 schema_view = get_schema_view(
     openapi.Info(
         title="Plant Guardian API",
@@ -25,10 +25,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/plants/', include('plants.urls')),
     path('api/users/', include('users.urls')),
+    path('api/subscription/', include('subscription.urls')),
+
     path('fcm/', include('notifications.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 
-# اضافه کردن مسیر فایل‌های رسانه‌ای (تصاویر و...)
+
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
