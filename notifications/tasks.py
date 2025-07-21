@@ -2,8 +2,8 @@
 
 
 from celery import shared_task
-from plants.models import Plant  # مدل Plant را از اپلیکیشن اصلی وارد می‌کنیم
-from .models import FCMDevice  # مدل FCMDevice را از همین اپلیکیشن وارد می‌کنیم
+from plants.models import Plant
+from .models import FCMDevice
 import logging
 import firebase_admin
 from firebase_admin import messaging, credentials
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # مطمئن شوید که مسیر فایل JSON مربوط به Firebase Admin SDK را به درستی وارد کرده‌اید.
 # این فایل باید در محیط تولید (production) در مکانی امن قرار گیرد.
 try:
-    cred = credentials.Certificate("path/to/your/firebase-adminsdk.json")
+    cred = credentials.Certificate("firebase/giyahyar-9eeca-firebase-adminsdk-fbsvc-4e41e5aeda.json")
     firebase_admin.initialize_app(cred)
 except ValueError:
     logger.warning("Firebase app already initialized.")
@@ -45,6 +45,8 @@ def water_plants(plant_id):
             )
 
             response = messaging.send(message)
+            logger.debug(f"✅ Message sent successfully: {response}")
+
             logger.info(
                 f"FCM notification sent for plant {plant.name} to user {plant.user.username}. Response: {response}")
 

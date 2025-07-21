@@ -6,14 +6,10 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 class FCMDeviceCreateUpdateView(generics.CreateAPIView):
-    """
-    View برای ثبت یا به‌روزرسانی توکن FCM دستگاه کاربر.
-    اگر توکن قبلاً برای کاربر وجود داشته باشد، به‌روزرسانی می‌شود.
-    اگر وجود نداشته باشد، یک رکورد جدید ایجاد می‌شود.
-    """
+
     queryset = FCMDevice.objects.all()
     serializer_class = FCMDeviceSerializer
-    permission_classes = [permissions.IsAuthenticated] # فقط کاربران احراز هویت شده می‌توانند توکن ثبت کنند
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         """
@@ -22,40 +18,21 @@ class FCMDeviceCreateUpdateView(generics.CreateAPIView):
         برای به‌روزرسانی توکن در صورت وجود قبلی استفاده می‌کنیم.
         """
         registration_id = serializer.validated_data['registration_id']
-        user = self.request.user # کاربر فعلی که درخواست را ارسال کرده
-
-        # تلاش برای پیدا کردن یا ایجاد/به‌روزرسانی توکن برای کاربر فعلی
-        # اگر توکن قبلاً برای این کاربر وجود داشته باشد، آن را به‌روزرسانی می‌کند.
-        # اگر توکن برای کاربر دیگری وجود داشته باشد، این باعث ایجاد یک رکورد جدید می‌شود.
-        # اما چون registration_id unique است، اگر توکن دقیقاً همین باشد،
-        # Django یک خطا می‌دهد. پس منطق باید کمی متفاوت باشد تا
-        # اگر توکن برای کاربر فعلی وجود دارد، آن را آپدیت کند.
-
-        # بهترین راه برای این سناریو این است که ابتدا بررسی کنیم آیا
-        # توکنی با این registration_id وجود دارد یا نه.
-        # اگر وجود دارد، آن را به کاربر فعلی اختصاص دهیم (اگر کاربرش فرق دارد)
-        # یا اگر کاربرش همین است، کاری نکنیم.
-        # اگر وجود ندارد، یک رکورد جدید بسازیم.
-
+        user = self.request.user
         try:
-            # سعی می‌کنیم دستگاهی با این registration_id پیدا کنیم
+
             fcm_device = FCMDevice.objects.get(registration_id=registration_id)
-            # اگر پیدا شد و کاربرش متفاوت بود، آن را به کاربر فعلی اختصاص می‌دهیم
             if fcm_device.user != user:
                 fcm_device.user = user
                 fcm_device.save()
-            # اگر پیدا شد و کاربرش همین بود، یعنی توکن قبلاً ثبت شده و نیازی به تغییر نیست.
-            serializer.instance = fcm_device # برای اینکه پاسخ View درست باشه
+            serializer.instance = fcm_device
             print(f"FCM token '{registration_id}' updated/already exists for user '{user.username}'.")
         except FCMDevice.DoesNotExist:
-            # اگر توکنی با این registration_id وجود نداشت، یک رکورد جدید ایجاد می‌کنیم
             serializer.save(user=user)
             print(f"New FCM token '{registration_id}' registered for user '{user.username}'.")
 
     def create(self, request, *args, **kwargs):
-        """
-        متد create رو override می‌کنیم تا پیام‌های موفقیت‌آمیز و خطا رو بهتر مدیریت کنیم.
-        """
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
