@@ -1,11 +1,20 @@
 from django.urls import path
-from . import views
-
+from .views import (
+    SubscriptionListCreateView, SubscriptionDeleteView,
+    PlanListView, PaymentHistoryListView, SubscriptionStatsView
+)
 urlpatterns = [
-    path('', views.SubscriptionListView.as_view()),                    # GET /api/subscription
-    path('buy/', views.SubscriptionCreateView.as_view()),              # POST /api/subscription/buy
-    path('<int:pk>/', views.SubscriptionDeleteView.as_view()),         # DELETE /api/subscription/<pk>
-    path('plans/', views.PlanListView.as_view()),                      # GET /api/subscription/plans
-    path('history/', views.PaymentHistoryListView.as_view()),          # GET /api/subscription/history
-    path('stats/', views.SubscriptionStatsView.as_view()),             # GET /api/subscription/stats
+    path('', SubscriptionListCreateView.as_view()),                    # GET, POST /api/subscription/
+    path('<int:pk>/', SubscriptionDeleteView.as_view()),               # DELETE /api/subscription/<pk>/        
+    path('plans/', PlanListView.as_view()),                            # GET /api/subscription/plans/
+    path('history/', PaymentHistoryListView.as_view()),                # GET /api/subscription/history/
+    path('stats/', SubscriptionStatsView.as_view()),                   # GET /api/subscription/stats/
 ]
+
+
+
+
+         
+                        
+              
+             

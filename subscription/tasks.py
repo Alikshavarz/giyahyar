@@ -1,35 +1,45 @@
 from celery import shared_task
 from django.utils import timezone
 from .models import Subscription
-from users.models import CustomUser
-from django.core.mail import send_mail
+
+
+try:
+    from notifications.models import FCMDevice
+except ImportError:
+    FCMDevice = None
+
+def send_fcm_notification(user, title, message):
+    if FCMDevice:
+        devices = FCMDevice.objects.filter(user=user, active=True)
+        if devices:
+            devices.send_message(title=title, body=message)
+ 
+    else:
+        print(f"FAKE FCM: {user} | {title}: {message}")
 
 @shared_task
-def notify_expiring_subscriptions_3_days():
-    check_time = timezone.now() + timezone.timedelta(days=3)
-    subs = Subscription.objects.filter(is_active=True, expired_at__date=check_time.date())
+def notify_expiry_soon():
+    """
+    به کاربرانی که 3 روز تا پایان اشتراک‌شان مانده نوتیف بده.
+    """
+    target = timezone.now() + timezone.timedelta(days=3)
+    subs = Subscription.objects.filter(is_active=True, expired_at__date=target.date())
     for sub in subs:
-        if sub.user.email:
-            send_mail(
-                subject="یادآوری تمدید اشتراک",
-                message="کاربر گرامی، اشتراک شما تا سه روز دیگر به پایان می‌رسد. لطفا جهت تمدید اقدام کنید.",
-                from_email="no-reply@myproject.com",
-                recipient_list=[sub.user.email]
-            )
+        send_fcm(
+            sub.user,
+            "یادآوری تمدید اشتراک",
+            f"اشتراک شما تا {sub.expired_at.date()} اعتبار دارد."
+        )
 
 @shared_task
-def deactivate_expired_subscriptions():
+def deactivate_expired():
+    """
+    اشتراک‌های منقضی را غیرفعال کن و نوتیف بده.
+    """
     now = timezone.now()
-    expired_subs = Subscription.objects.filter(is_active=True, expired_at__lt=now)
-    for sub in expired_subs:
+    expireds = Subscription.objects.filter(is_active=True, expired_at__lt=now)
+    for sub in expireds:
         sub.is_active = False
-        sub.save()
-        
-        
-        if sub.user.email:
-            send_mail(
-                subject="اتمام اشتراک",
-                message="اشتراک شما به پایان رسیده و دسترسی شما محدود شد.",
-                from_email="no-reply@myproject.com",
-                recipient_list=[sub.user.email]
-            )
+        sub.save(update_fields=['is_active'])
+        send_fcm(sub.user, "اتمام اشتراک", "اشتراک شما به پایان رسید.")
+
