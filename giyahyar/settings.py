@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+from decouple import config
+
+
 # from dotenv import load_dotenv
 # load_dotenv()
 
@@ -46,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_celery_beat',
+    'django_cron',
 
     'drf_yasg',
     'phonenumber_field',
@@ -58,6 +62,12 @@ INSTALLED_APPS = [
     'notifications',
 
 ]
+
+
+CRON_CLASSES = [
+    "plants.cron.WaterReminderCron",
+]
+
 
 
 
@@ -174,3 +184,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+FIREBASE_CREDENTIAL_PATH = config('FIREBASE_CREDENTIAL_PATH')
+FCM_SERVER_KEY = config('FCM_SERVER_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = config('SECRET_KEY')
+
