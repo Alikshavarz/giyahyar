@@ -1,44 +1,107 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import FCMDevice
-from .serializers import FCMDeviceSerializer
-from django.conf import settings
+from .serializers import FCMDeviceSerializer, FCMNotificationSerializer
 from django.utils.translation import gettext_lazy as _
+from .firebase_service import send_notification
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FCMDeviceCreateUpdateView(generics.CreateAPIView):
-
     queryset = FCMDevice.objects.all()
     serializer_class = FCMDeviceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        """
-        این متد قبل از ذخیره کردن شیء فراخوانی می‌شود.
-        ما از این متد برای اختصاص کاربر فعلی به توکن و همچنین
-        برای به‌روزرسانی توکن در صورت وجود قبلی استفاده می‌کنیم.
-        """
         registration_id = serializer.validated_data['registration_id']
         user = self.request.user
-        try:
 
-            fcm_device = FCMDevice.objects.get(registration_id=registration_id)
-            if fcm_device.user != user:
-                fcm_device.user = user
-                fcm_device.save()
-            serializer.instance = fcm_device
-            print(f"FCM token '{registration_id}' updated/already exists for user '{user.username}'.")
-        except FCMDevice.DoesNotExist:
-            serializer.save(user=user)
-            print(f"New FCM token '{registration_id}' registered for user '{user.username}'.")
+        fcm_device, created = FCMDevice.objects.update_or_create(
+            registration_id=registration_id,
+            defaults={'user': user, 'is_active': True}
+        )
+        serializer.instance = fcm_device
+
+        if created:
+            logger.info(f"New FCM token '{registration_id}' registered for user '{user.username}'.")
+        else:
+            logger.info(f"FCM token '{registration_id}' updated for user '{user.username}'.")
 
     def create(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(
-            {'message': _("FCM device token registered/updated successfully."), 'token': serializer.instance.registration_id},
+            {
+                'message': _("FCM device token registered/updated successfully."),
+                'token': serializer.instance.registration_id
+            },
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+
+# --------------------------------------------
+
+class FCMDeviceListView(generics.ListAPIView):
+    serializer_class = FCMDeviceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return FCMDevice.objects.filter(user=self.request.user, is_active=True)
+
+# ------------------------------------------------
+
+class FCMDeviceDeleteView(generics.DestroyAPIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = FCMDevice.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user:
+            return Response({"detail": "شما اجازه حذف این توکن را ندارید."}, status=status.HTTP_403_FORBIDDEN)
+        self.perform_destroy(instance)
+        return Response({"detail": "توکن با موفقیت حذف شد."}, status=status.HTTP_204_NO_CONTENT)
+
+
+# ------------------------------------
+
+logger = logging.getLogger("notifications")
+
+class SendFCMNotificationView(generics.CreateAPIView):
+    serializer_class = FCMNotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        title = serializer.validated_data['title']
+        body = serializer.validated_data['body']
+        data = serializer.validated_data.get('data', {})
+
+        devices = FCMDevice.objects.filter(user=request.user, is_active=True)
+
+        if not devices.exists():
+            logger.warning(f"⛔️ کاربر «{request.user.username}» هیچ توکن فعالی ندارد.")
+            return Response(
+                {"detail": _("توکن فعالی برای این کاربر یافت نشد.")},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        success, failure = 0, 0
+        for device in devices:
+            sent = send_notification(device.registration_id, title, body, data)
+            if sent:
+                success += 1
+            else:
+                failure += 1
+
+        logger.info(f"📨 ارسال FCM برای کاربر «{request.user.username}»: موفق={success}, ناموفق={failure}")
+        return Response({
+            "sent": success,
+            "failed": failure,
+            "message": _("ارسال اعلان به پایان رسید.")
+        }, status=status.HTTP_200_OK)

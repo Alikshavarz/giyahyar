@@ -44,16 +44,13 @@ class PlantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class PlantImageUploadView(generics.CreateAPIView):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
-    permission_classes = [IsAuthenticated]  # فقط کاربران احراز هویت شده می‌توانند آپلود کنند
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # کاربر توسط serializer.create تنظیم می‌شود و اعتبارسنجی محدودیت آپلود هم آنجا انجام می‌شود.
         plant = serializer.save(user=self.request.user)
 
-        # اجرای تشخیص با استفاده از مدل هوش مصنوعی
         try:
-            # مطمئن شوید که diagnose_plant مسیر تصویر یا خود فایل را دریافت می‌کند
-            diagnosis_info = diagnose_plant(plant.image.path)  # فرض بر این است که مسیر فایل نیاز است
+            diagnosis_info = diagnose_plant(plant.image.path)
             if diagnosis_info:
                 PlantDiagnosis.objects.create(
                     plant=plant,
@@ -65,7 +62,6 @@ class PlantImageUploadView(generics.CreateAPIView):
                     confidence=diagnosis_info.get('confidence', 0.0),
                 )
             else:
-                # اگر تشخیص اطلاعاتی برنگرداند، یک تشخیص عمومی ثبت شود
                 PlantDiagnosis.objects.create(
                     plant=plant,
                     image=plant.image,
@@ -75,11 +71,8 @@ class PlantImageUploadView(generics.CreateAPIView):
                     confidence=0.0
                 )
         except Exception as e:
-            # ثبت خطا اما اجازه ادامه کار برای ایجاد گیاه را می‌دهیم
-            # می‌توانید این خطا را به کاربر نیز برگردانید
-            print(f"Error during plant diagnosis for plant {plant.id}: {e}")
-            # در اینجا می‌توانید انتخاب کنید که خطا را به کاربر بازگردانید یا فقط لاگ کنید
-            # raise serializers.ValidationError(f"Error in plant diagnosis: {str(e)}")
+              print(f"Error during plant diagnosis for plant {plant.id}: {e}")
+              # raise serializers.ValidationError(f"Error in plant diagnosis: {str(e)}")
 
 
 # ======================================================
@@ -89,14 +82,10 @@ class PlantDiagnosisListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # فقط تشخیص‌های مربوط به گیاهان کاربر فعلی را نمایش می‌دهد
         return PlantDiagnosis.objects.filter(plant__user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        # فرض بر این است که تصویر برای تشخیص ارسال می‌شود
-        # منطق واقعی تشخیص در PlantImageUploadView انجام می‌شود
-        # این View بیشتر برای ایجاد تشخیص‌های دستی یا مشاهده لیست استفاده می‌شود
-        # اگر می‌خواهید از اینجا تشخیص AI را فعال کنید، باید منطق diagnose_plant را اینجا هم اضافه کنید.
+
         serializer.save()
 
 
@@ -128,12 +117,10 @@ class WateringLogCreateView(generics.CreateAPIView):
             raise serializers.ValidationError("Plant ID is required.")
 
         try:
-            # مطمئن شوید که گیاه متعلق به کاربر فعلی است
             plant = Plant.objects.get(pk=plant_id, user=self.request.user)
 
             note = serializer.validated_data.get('note', '')
-            plant.mark_watered_today(note=note)  # ثبت آبیاری و ایجاد لاگ توسط متد مدل
-            # نیازی به serializer.save() جداگانه نیست زیرا mark_watered_today خودش لاگ را ایجاد می‌کند.
+            plant.mark_watered_today(note=note)
 
         except Plant.DoesNotExist:
             raise NotFound("The specified plant was not found or you do not have permission to water it.")
@@ -161,12 +148,9 @@ class WateringScheduleListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # فقط زمان‌بندی‌های آبیاری مربوط به گیاهان کاربر فعلی را نمایش می‌دهد
         return WateringSchedule.objects.filter(plant__user=self.request.user).order_by('plant__name')
 
     def perform_create(self, serializer):
-        # این متد توسط WateringScheduleSerializer.create فراخوانی می‌شود
-        # Plant.user را در سریالایزر بررسی کنید
         plant = serializer.validated_data['plant']
         if plant.user != self.request.user:
             raise PermissionDenied("You do not have permission to create a watering schedule for this plant.")
@@ -179,7 +163,6 @@ class WateringScheduleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAP
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # فقط زمان‌بندی‌های آبیاری مربوط به گیاهان کاربر فعلی را بازیابی می‌کند
         obj = generics.get_object_or_404(
             self.get_queryset().filter(plant__user=self.request.user),
             pk=self.kwargs['pk']

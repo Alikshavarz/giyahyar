@@ -3,21 +3,16 @@ from datetime import timedelta, date
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings  # برای ارجاع به مدل User
+import json
 
 
 # =========================================================
 class Plant(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # ارجاع به مدل User پیش‌فرض جنگو (یا مدل User کاستوم شما)
-        on_delete=models.CASCADE,  # وقتی کاربر حذف شد، گیاهانش هم حذف شوند
-        related_name='plants',  # برای دسترسی از User به گیاهانش (user.plants.all())
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='plants',
         verbose_name=_("User"),
-        # **اینجا تغییر اصلی است:**
-        # وقتی فیلد user را به مدل Plant اضافه می‌کنیم و از قبل در دیتابیس داده داریم،
-        # Django نمی‌داند این فیلد جدید را برای داده‌های موجود چه مقداری بگذارد.
-        # پس باید یک مقدار پیش‌فرض یک‌باره (one-off default) یا دائمی تعیین کنیم.
-        # 'default=1' به این معنی است که تمام گیاهان موجود (هنگام اجرای migrate) به کاربری با ID=1 اختصاص داده شوند.
-        # فرض بر این است که شما یک کاربر (معمولا ادمین) با ID=1 دارید.
         default=1
     )
     name = models.CharField(max_length=100, verbose_name=_("Plant Name"))
@@ -46,14 +41,15 @@ class Plant(models.Model):
         if self.last_watered and self.watering_frequency:
             self.next_watering = self.last_watered + timedelta(days=self.watering_frequency)
         else:
-            self.next_watering = None  # اگر اطلاعات کافی نیست، زمان بعدی مشخص نیست
-        self.save(update_fields=['next_watering'])  # فقط فیلد next_watering را ذخیره کن
+            self.next_watering = None
+        self.save(update_fields=['next_watering'])
 
     def mark_watered_today(self, note=""):
         """ثبت آبیاری امروز و به‌روزرسانی زمان بعدی و ثبت لاگ"""
         self.last_watered = date.today()
-        self.update_next_watering()  # این متد خودش save می‌کند
-        WateringLog.objects.create(plant=self, note=note)  # یک رکورد جدید در جدول WateringLog می‌سازد
+        self.update_next_watering()
+        WateringLog.objects.create(plant=self, note=note)
+
 
 
 # =======================================================
@@ -114,9 +110,7 @@ class WateringSchedule(models.Model):  #  برای مدیریت و تعیین ز
 
     def create_schedule(self):
         """ایجاد یا به‌روزرسانی زمان‌بندی Celery Beat برای آبیاری."""
-        import json  # Import json inside the method
 
-        # اگر از قبل زمان‌بندی وجود دارد، آن را حذف کن
         if self.schedule:
             self.schedule.delete()
 
@@ -137,7 +131,6 @@ class WateringSchedule(models.Model):  #  برای مدیریت و تعیین ز
     def __str__(self):
         return f"{self.plant.name} watering schedule every {self.frequency} days"
 
-    # اضافه کردن متد delete برای حذف PeriodicTask هنگام حذف WateringSchedule
     def delete(self, *args, **kwargs):
         if self.schedule:
             self.schedule.delete()

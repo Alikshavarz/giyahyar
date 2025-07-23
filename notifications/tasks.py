@@ -10,8 +10,7 @@ from firebase_admin import messaging, credentials
 
 logger = logging.getLogger(__name__)
 
-# مطمئن شوید که مسیر فایل JSON مربوط به Firebase Admin SDK را به درستی وارد کرده‌اید.
-# این فایل باید در محیط تولید (production) در مکانی امن قرار گیرد.
+
 try:
     cred = credentials.Certificate("firebase/giyahyar-9eeca-firebase-adminsdk-fbsvc-4e41e5aeda.json")
     firebase_admin.initialize_app(cred)
@@ -27,11 +26,9 @@ def water_plants(plant_id):
     تسک Celery برای ارسال اعلان آبیاری برای یک گیاه خاص.
     """
     try:
-        # اطلاعات گیاه را از اپلیکیشن plant دریافت می‌کنیم
         plant = Plant.objects.get(id=plant_id)
         logger.info(f"Preparing to send watering notification for plant: {plant.name} (ID: {plant.id})")
 
-        # توکن FCM کاربر را از مدل FCMDevice در همین اپلیکیشن می‌گیریم
         try:
             fcm_device = FCMDevice.objects.get(user=plant.user)
             token = fcm_device.registration_id
