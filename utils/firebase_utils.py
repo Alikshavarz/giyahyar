@@ -51,5 +51,3 @@ class PlantDiagnosisService:
         except Exception as e:
             logger.error(f"❌ خطای داخلی در diagnosis: {e}", exc_info=True)
             return None
-
-

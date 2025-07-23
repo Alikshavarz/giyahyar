@@ -16,7 +16,7 @@ class NotificationsConfig(AppConfig):
             import firebase_admin
             from firebase_admin import credentials
 
-            cred_path = os.getenv('FIREBASE_CREDENTIAL_PATH', 'firebase/firebase_key.json')
+            cred_path = os.getenv('FIREBASE_CREDENTIAL_PATH', 'firebase/giyahyar-9eeca-firebase-adminsdk-fbsvc-4e41e5aeda.json')
 
             if not firebase_admin._apps:
                 cred = credentials.Certificate(cred_path)

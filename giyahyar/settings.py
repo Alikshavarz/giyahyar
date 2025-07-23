@@ -13,11 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
-from decouple import config
+from decouple import config, Csv # Csv برای خواندن لیست از فایل .env اضافه شد
 
-
-# from dotenv import load_dotenv
-# load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9-6@+5t1%vl)vz&zf0i+o1ppi-+&63l!2*8m6m7g=k)3dba2g*'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['yourdomain.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
 
 # Application definition
@@ -49,7 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_celery_beat',
-    'django_cron',
+    # 'django_cron', # توصیه میشه اگر از Celery استفاده میکنید، django_cron رو حذف کنید
 
     'drf_yasg',
     'phonenumber_field',
@@ -63,12 +60,10 @@ INSTALLED_APPS = [
 
 ]
 
-
-CRON_CLASSES = [
-    "plants.cron.WaterReminderCron",
-]
-
-
+# اگر از django_cron استفاده میکنید و مشکل index_together حل شده
+# CRON_CLASSES = [
+#     "plants.cron.WaterReminderCron",
+# ]
 
 
 MIDDLEWARE = [
@@ -86,21 +81,51 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # Optional: اگر میخوای توابع داخلی DRF مثل Browsable API هم کار کنن
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # )
 }
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
-
-
-
-CELERY_BROKER_URL = 'redis://localhost:6379/0' 
+# تنظیمات Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Tehran'  
+CELERY_TIMEZONE = 'Asia/Tehran'
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# JWT (Simple JWT) Settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
 
 
 ROOT_URLCONF = 'giyahyar.urls'
@@ -126,7 +151,6 @@ WSGI_APPLICATION = 'giyahyar.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-#
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -165,7 +189,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
 
@@ -176,8 +200,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# STATIC_ROOT برای پروداکشن استفاده میشه و باید با collectstatic جمع آوری بشه
+# STATIC_ROOT = BASE_DIR / 'staticfiles' # در پروداکشن باید uncomment بشه
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media' # مسیر جایی که فایل های آپلود شده کاربران ذخیره میشن
 
 
 # Default primary key field type
@@ -186,8 +213,27 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-FIREBASE_CREDENTIAL_PATH = config('FIREBASE_CREDENTIAL_PATH')
-FCM_SERVER_KEY = config('FCM_SERVER_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-SECRET_KEY = config('SECRET_KEY')
+# تنظیمات مربوط به Firebase و FCM (از .env خونده میشه)
+FIREBASE_CREDENTIAL_PATH = config('FIREBASE_CREDENTIAL_PATH', default='')
+FCM_SERVER_KEY = config('FCM_SERVER_KEY', default='')
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}

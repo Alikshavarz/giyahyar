@@ -1,6 +1,6 @@
 from .models import Plant, PlantDiagnosis, WateringLog, WateringSchedule
 from .serializers import PlantSerializer, PlantDiagnosisSerializer, WateringLogSerializer, WateringScheduleSerializer
-from giyahyar.utils import diagnose_plant  # فرض بر این است که این تابع تشخیص گیاه را انجام می‌دهد
+from utils import firebase_utils
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework import serializers
 from rest_framework import generics
