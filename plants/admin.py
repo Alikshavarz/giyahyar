@@ -43,12 +43,12 @@ class PlantAdmin(BaseAdmin):
         'name', 'user', 'species', 'uploaded_at', 'watering_frequency',
         'last_watered', 'next_watering', 'is_active', 'image_preview',
     )
-    list_filter = ('uploaded_at', 'is_active', 'user') # فیلتر بر اساس کاربر
-    search_fields = ['name', 'species', 'user__username'] # جستجو بر اساس نام کاربری
+    list_filter = ('uploaded_at', 'is_active', 'user')
+    search_fields = ['name', 'species', 'user__username']
     list_editable = ('watering_frequency', 'is_active')
     readonly_fields = ('image_preview', 'uploaded_at', 'next_watering')
     inlines = [WateringLogInline, PlantDiagnosisInline]
-    autocomplete_fields = ['user'] # برای سهولت انتخاب کاربر در صفحه ادمین
+    autocomplete_fields = ['user']
 
 # ==========================
 # 🦠 Admin: Plant Diagnosis
@@ -57,7 +57,7 @@ class PlantDiagnosisAdmin(BaseAdmin):
     list_display = (
         'plant', 'category', 'confidence', 'created_at', 'image_preview',
     )
-    search_fields = ('diagnosis', 'plant__name', 'plant__user__username') # جستجو بر اساس نام گیاه و کاربر
+    search_fields = ('diagnosis', 'plant__name', 'plant__user__username')
     list_filter = ('category', 'created_at')
     readonly_fields = (
         'created_at', 'diagnosis', 'care_instructions', 'confidence', 'image_preview'
@@ -69,7 +69,7 @@ class PlantDiagnosisAdmin(BaseAdmin):
 # ==========================
 class WateringLogAdmin(admin.ModelAdmin):
     list_display = ('plant', 'watered_at', 'note')
-    list_filter = ('watered_at', 'plant__user') # فیلتر بر اساس کاربر گیاه
+    list_filter = ('watered_at', 'plant__user')
     search_fields = ('plant__name', 'note', 'plant__user__username')
     ordering = ('-watered_at',)
     autocomplete_fields = ('plant',)
