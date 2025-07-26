@@ -1,44 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
-from phonenumber_field.modelfields import PhoneNumberField
+from django.utils.timezone import now
 
 class CustomUser(AbstractUser):
-   
-    phone_number = PhoneNumberField(
-        unique=True,
-        verbose_name='شماره موبایل',
-        blank=False,
-        null=False,
-        help_text='شماره موبایل کاربر'
-    )
+    phone_number = models.CharField(max_length=15, unique=True)
+    is_phone_verified = models.BooleanField(default=False)
+    feature_usage_count = models.PositiveIntegerField(default=0)  
+    sms_code = models.CharField(max_length=5, blank=True, null=True)
+    sms_code_expiry = models.DateTimeField(blank=True, null=True)
 
-    usage_count = models.PositiveIntegerField(
-        default=0,
-        help_text='تعداد دفعات استفاده غیر اشتراکی'
-    )
-
-    subscription_end = models.DateField(
-        blank=True,
-        null=True,
-        help_text='تاریخ پایان اشتراک کاربر'
-    )
-
-    def __str__(self):
-        return f"{self.username} ({self.phone_number})"
+    def reset_usage_count(self):
+        self.feature_usage_count = 0
+        self.save()
 
     @property
     def has_active_subscription(self):
-        
-        return bool(self.subscription_end) and self.subscription_end >= timezone.now().date()
-
-    def increment_usage(self):
        
-        if not self.has_active_subscription:
-            CustomUser.objects.filter(pk=self.pk).update(usage_count=models.F('usage_count') + 1)
-            self.refresh_from_db(fields=['usage_count'])
-
-    def reset_usage(self):
-       
-        self.usage_count = 0
-        self.save(update_fields=['usage_count'])
+        sub = getattr(self, "subscription_set", None)
+        if not sub:
+            return False
+        active_sub = self.subscription_set.filter(is_active=True, expire_at__gte=now()).last()
+        return bool(active_sub)

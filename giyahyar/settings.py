@@ -13,20 +13,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
-from decouple import config, Csv # Csv برای خواندن لیست از فایل .env اضافه شد
+from decouple import config, Csv 
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+
 SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
@@ -46,8 +46,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_celery_beat',
-    # 'django_cron', # توصیه میشه اگر از Celery استفاده میکنید، django_cron رو حذف کنید
-
     'drf_yasg',
     'phonenumber_field',
 
@@ -60,10 +58,6 @@ INSTALLED_APPS = [
 
 ]
 
-# اگر از django_cron استفاده میکنید و مشکل index_together حل شده
-# CRON_CLASSES = [
-#     "plants.cron.WaterReminderCron",
-# ]
 
 
 MIDDLEWARE = [
@@ -81,10 +75,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # Optional: اگر میخوای توابع داخلی DRF مثل Browsable API هم کار کنن
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
-    # )
+  
 }
 
 
@@ -154,9 +145,9 @@ WSGI_APPLICATION = 'giyahyar.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'giyahyar',
-        'USER': 'maryam',
-        'PASSWORD': 'maryam77',
+        'NAME': 'giyahyar_db',
+        'USER': 'giyahyar',
+        'PASSWORD': 'newgiyahyar11',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -200,11 +191,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-# STATIC_ROOT برای پروداکشن استفاده میشه و باید با collectstatic جمع آوری بشه
-# STATIC_ROOT = BASE_DIR / 'staticfiles' # در پروداکشن باید uncomment بشه
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media' # مسیر جایی که فایل های آپلود شده کاربران ذخیره میشن
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Default primary key field type
@@ -213,7 +202,6 @@ MEDIA_ROOT = BASE_DIR / 'media' # مسیر جایی که فایل های آپل�
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# تنظیمات مربوط به Firebase و FCM (از .env خونده میشه)
 FIREBASE_CREDENTIAL_PATH = config('FIREBASE_CREDENTIAL_PATH', default='')
 FCM_SERVER_KEY = config('FCM_SERVER_KEY', default='')
 

@@ -1,14 +1,16 @@
 from django.urls import path
 from .views import (
-    RegisterView, CustomLoginView, ProfileView, GuestUseView,
-    UseFeatureView, LogoutView
+    GuestFeatureView, RegisterView, VerifyPhoneView, LoginView,
+    LoginOTPVerify, AuthFeatureView, LogoutView, UserProfileView
 )
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', CustomLoginView.as_view(), name='login'),
-    path('profile/', ProfileView.as_view(), name='profile'),
-    path('guest-use/', GuestUseView.as_view(), name='guest-use'),
-    path('use-feature/', UseFeatureView.as_view(), name='use-feature'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path('guest-feature/', GuestFeatureView.as_view()),
+    path('register/', RegisterView.as_view()),
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
+    path('verify-phone/', VerifyPhoneView.as_view()),
+    path('login/', LoginView.as_view()),
+    path('login-otp/', LoginOTPVerify.as_view()),
+    path('use-feature/', AuthFeatureView.as_view()),
+    path('logout/', LogoutView.as_view())
 ]
