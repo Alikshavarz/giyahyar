@@ -1,11 +1,11 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
 
 @admin.register(CustomUser)
-class CustomUserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(UserAdmin):
     list_display = (
-        'username', 'phone_number', 'email', 'usage_count',
-        'has_active_subscription', 'subscription_end'
+        'username', 'first_name', 'last_name', 'phone_number',
+        'is_phone_verified', 'feature_usage_count', 'is_active'
     )
-    search_fields = ('username', 'phone_number', 'email')
-    list_filter = ('is_staff', 'is_superuser')
+    readonly_fields = ('feature_usage_count', 'sms_code', 'sms_code_expiry')

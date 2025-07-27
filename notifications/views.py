@@ -105,3 +105,22 @@ class SendFCMNotificationView(generics.CreateAPIView):
             "failed": failure,
             "message": _("ارسال اعلان به پایان رسید.")
         }, status=status.HTTP_200_OK)
+
+
+
+
+# در یکی از views.py یا یک فایل موقت برای تست
+from django.http import HttpResponse
+from firebase_admin import firestore
+
+def test_firebase_firestore(request):
+    try:
+        db = firestore.client()
+        doc_ref = db.collection('test_collection').document('test_document')
+        doc_ref.set({
+            'message': 'Hello from Django Firebase!',
+            'timestamp': firestore.SERVER_TIMESTAMP
+        })
+        return HttpResponse("Data written to Firestore successfully!")
+    except Exception as e:
+        return HttpResponse(f"Error writing to Firestore: {e}", status=500)
