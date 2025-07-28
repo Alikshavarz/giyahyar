@@ -1,17 +1,17 @@
 from django.utils import timezone
 from .models import Subscription, Notification
 
-def check_expiring_subscriptions():
+def send_subscription_reminders():
+    ''' پیدا کردن اشتراک‌هایی که ۳ روز مونده به پایانشون  '''
     now = timezone.now()
-    three_days_later = now + timezone.timedelta(days=3)
-    subscriptions = Subscription.objects.filter(is_active=True, expire_at__gte=now, expire_at__lte=three_days_later)
-    for sub in subscriptions:
-        msg = f"اشتراک شما تا {sub.expire_at.date()} فعال است. فقط ۳ روز دیگر باقیست! برای تمدید اقدام کنید."
-        Notification.objects.get_or_create(user=sub.user, message=msg)
-
+    almost_expire = now + timezone.timedelta(days=3)
+    qs = Subscription.objects.filter(is_active=True, expire_at__date=almost_expire.date())
+    for sub in qs:
+        message = f"اشتراک شما در پلن {sub.plan.name} تا ۳ روز دیگر به پایان می‌رسد. لطفاً تمدید کنید."
+        if not Notification.objects.filter(user=sub.user, message__contains=sub.plan.name, created_at__date=now.date()).exists():
+            Notification.objects.create(user=sub.user, message=message)
     expired = Subscription.objects.filter(is_active=True, expire_at__lt=now)
     for sub in expired:
         sub.is_active = False
         sub.save()
-        msg = "اشتراک شما به پایان رسید و دسترسی محدود شد. برای فعالسازی مجدد، اشتراک جدید خریداری کنید."
-        Notification.objects.get_or_create(user=sub.user, message=msg)
+        Notification.objects.create(user=sub.user, message=f"اشتراک شما در پلن {sub.plan.name} به پایان رسید و دسترسی شما محدود شد.")
