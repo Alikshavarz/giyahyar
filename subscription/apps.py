@@ -1,5 +1,5 @@
 from django.apps import AppConfig
+
 class SubscriptionConfig(AppConfig):
-    name = "subscription"
-    def ready(self):
-        import subscription.signals
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'subscription'
