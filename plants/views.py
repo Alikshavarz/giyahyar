@@ -39,22 +39,20 @@ class PlantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
     serializer_class = PlantDiagnosisSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser) # برای پردازش آپلود فایل
+    parser_classes = (MultiPartParser, FormParser)
 
     def perform_create(self, serializer):
         plant_id = self.kwargs.get('pk')
         if not plant_id:
-            raise DRFValidationError({"plant": "Plant ID is required for diagnosis."})
+            raise DRFValidationError({"plant": "شناسه گیاه برای تشخیص لازم است"})
 
         try:
             plant = Plant.objects.get(pk=plant_id, user=self.request.user)
         except Plant.DoesNotExist:
-            raise NotFound("Plant not found or you don't have permission to diagnose it.")
+            raise NotFound("گیاه پیدا نشد یا شما اجازه تشخیص آن را ندارید.")
 
-        # بررسی محدودیت تعداد تشخیص‌ها (عکس‌ها)
         user_diagnoses_count = PlantDiagnosis.objects.filter(plant__user=self.request.user).count()
-        if user_diagnoses_count >= 3 and not getattr(self.request.user, 'is_premium', False):
-            raise PermissionDenied("Free diagnosis limit reached. Please upgrade to premium to upload more images.")
+
 
         diagnosis_instance = serializer.save(plant=plant)
 
@@ -64,35 +62,45 @@ class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
                 api_key=settings.AI_API_KEY
             )
             ai_output = ai_service.diagnose()
-            diagnosis_text = "No specific issue found."
-            care_instructions_text = "General plant care advice."
-            category_text = "other"
+
+            diagnosis_text = "مشکل خاصی پیدا نشد."
+            care_instructions_text = "توصیه‌های کلی برای مراقبت از گیاه."
+            category_text = "سایر"
             confidence_score = 0.0
 
             if ai_output and 'suggestions' in ai_output and ai_output['suggestions']:
-                best_suggestion = ai_output['suggestions'][0] # معمولا بهترین تشخیص اولین مورد است
+                best_suggestion = ai_output['suggestions'][0]
                 confidence_score = best_suggestion.get('probability', 0.0)
 
-                if 'health_assessment' in ai_output and not ai_output['health_assessment'].get('is_healthy', True): # فرض می کنیم is_healthy میاد و اگر نیامد سالم در نظر می گیریم
-                    problems = ai_output['health_assessment'].get('diseases', []) + ai_output['health_assessment'].get('pests', [])
+                if 'health_assessment' in ai_output and not ai_output['health_assessment'].get('is_healthy', True):
+                    problems = ai_output['health_assessment'].get('diseases', []) + ai_output['health_assessment'].get(
+                        'pests', [])
                     if problems:
                         first_problem = problems[0]
                         diagnosis_text = f"مشکل احتمالی: {first_problem.get('name', 'ناشناخته')}"
-                        care_instructions_text = best_suggestion.get('details', {}).get('wiki_description', 'دستورالعمل مراقبتی خاصی ارائه نشده است.')
-                        category_text = "disease"
+                        care_instructions_text = best_suggestion.get('details', {}).get('wiki_description',
+                                                                                        'دستورالعمل مراقبتی خاصی ارائه نشده است.')
+                        category_text = "بیماری"
                     else:
                         diagnosis_text = "سلامت گیاه تایید نشد، اما مشکل خاصی شناسایی نشد."
-                        category_text = "unhealthy_unknown"
+                        category_text = "ناسالم_ناشناخته"
 
-                elif best_suggestion.get('name'):
-                    diagnosis_text = f"شناسایی گیاه: {best_suggestion.get('name', 'ناشناخته')}"
-                    care_instructions_text = best_suggestion.get('details', {}).get('wiki_description', '')
-                    category_text = "identified"
+                elif best_suggestion.get('plant_name'):
+                    plant_details = best_suggestion.get('plant_details', {})
+                    common_names = plant_details.get('common_names', [])
+                    if common_names:
+
+                        plant_name = common_names[0]
+                    else:
+                        plant_name = best_suggestion.get('plant_name', 'ناشناخته')
+
+                    diagnosis_text = f"شناسایی گیاه: {plant_name}"
+                    care_instructions_text = plant_details.get('wiki_description', {}).get('value', '')
+                    category_text = "شناسایی_شده"
             else:
                 diagnosis_text = "تشخیص هوش مصنوعی امکان‌پذیر نبود. لطفاً تصویر واضح‌تری آپلود کنید."
                 care_instructions_text = "لطفاً با کارشناس گیاه مشورت کنید."
-                category_text = "other"
-
+                category_text = "سایر"
 
             diagnosis_instance.diagnosis = diagnosis_text
             diagnosis_instance.care_instructions = care_instructions_text
@@ -101,13 +109,16 @@ class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
             diagnosis_instance.save()
 
         except Exception as e:
-            print(f"Error during AI diagnosis for plant diagnosis {diagnosis_instance.id}: {e}")
-            diagnosis_instance.diagnosis = f"AI diagnosis failed: {e}. Please ensure the image is clear and try again."
-            diagnosis_instance.care_instructions = "Please upload a clearer image or consult a plant expert manually."
-            diagnosis_instance.category = "other"
+            import traceback
+            print("An error occurred during AI diagnosis:")
+            traceback.print_exc()
+
+            diagnosis_instance.diagnosis = f"تشخیص هوش مصنوعی ناموفق بود: {e}. لطفا از وضوح تصویر اطمینان حاصل کرده و دوباره امتحان کنید."
+            diagnosis_instance.care_instructions = "لطفا تصویر واضح‌تری آپلود کنید یا به صورت دستی با یک کارشناس گیاه مشورت کنید."
+            diagnosis_instance.category = "سایر"
             diagnosis_instance.confidence = 0.0
             diagnosis_instance.save()
-            raise DRFValidationError(f"AI diagnosis could not be completed: {e}")
+            raise DRFValidationError(f"تشخیص هوش مصنوعی تکمیل نشد: {e}")
 
 
 # ======================================================
@@ -143,7 +154,7 @@ class WateringLogCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         plant_id = self.kwargs.get('pk')
         if not plant_id:
-            raise DRFValidationError("Plant ID is required in the URL for recording watering.")
+            raise DRFValidationError("شناسه گیاه برای ثبت آبیاری در url الزامی است.")
 
         try:
             plant = Plant.objects.get(pk=plant_id, user=self.request.user)
@@ -151,9 +162,9 @@ class WateringLogCreateView(generics.CreateAPIView):
             plant.mark_watered_today(note=note)
 
         except Plant.DoesNotExist:
-            raise NotFound("The specified plant was not found or you do not have permission to water it.")
+            raise NotFound("گیاه مشخص شده پیدا نشد یا شما اجازه آبیاری آن را ندارید.")
         except Exception as e:
-            raise DRFValidationError(f"Error recording watering: {e}")
+            raise DRFValidationError(f"خطا در ثبت آبیاری: {e}")
 
 
 # ======================================================
@@ -165,7 +176,7 @@ class WateringLogListView(generics.ListAPIView):
     def get_queryset(self):
         plant_id = self.kwargs.get('pk')
         if not plant_id:
-            raise DRFValidationError("Plant ID is required in the URL to view watering history.")
+            raise DRFValidationError("شناسه گیاه (Plant ID) برای مشاهده تاریخچه آبیاری در URL الزامی است.")
         return WateringLog.objects.filter(plant__id=plant_id, plant__user=self.request.user).order_by('-watered_at')
 
 
@@ -180,3 +191,6 @@ class WateringScheduleListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         plant = serializer.validated_data['plant']
+
+
+

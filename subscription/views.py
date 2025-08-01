@@ -32,7 +32,7 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
             )
             send_fcm_notification(request.user, "تمدید موفق اشتراک", f"اشتراک {plan.name} شما تا {sub.expired_at:%Y-%m-%d} تمدید شد.")
             return Response(SubscriptionSerializer(sub).data, status=201)
-        # جدید:
+
         expired_at = now + timezone.timedelta(days=plan.duration_days)
         sub = Subscription.objects.create(
             user=request.user, plan=plan, started_at=now, expired_at=expired_at,

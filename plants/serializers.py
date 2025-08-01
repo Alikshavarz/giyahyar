@@ -20,7 +20,6 @@ class PlantSerializer(serializers.ModelSerializer):
         validated_data['user'] = user
 
 
-        # این بلوک کد در جنگو برای مدیریت تراکنش‌های دیتابیس (Database Transactions) استفاده میشه.
         with transaction.atomic():
             plant = super().create(validated_data)
             plant.update_next_watering()
