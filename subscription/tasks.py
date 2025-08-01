@@ -1,45 +1,17 @@
-from celery import shared_task
 from django.utils import timezone
-from .models import Subscription
+from .models import Subscription, Notification
 
-
-try:
-    from notifications.models import FCMDevice
-except ImportError:
-    FCMDevice = None
-
-def send_fcm_notification(user, title, message):
-    if FCMDevice:
-        devices = FCMDevice.objects.filter(user=user, active=True)
-        if devices:
-            devices.send_message(title=title, body=message)
- 
-    else:
-        print(f"FAKE FCM: {user} | {title}: {message}")
-
-@shared_task
-def notify_expiry_soon():
-    """
-    به کاربرانی که 3 روز تا پایان اشتراک‌شان مانده نوتیف بده.
-    """
-    target = timezone.now() + timezone.timedelta(days=3)
-    subs = Subscription.objects.filter(is_active=True, expired_at__date=target.date())
-    for sub in subs:
-        send_fcm(
-            sub.user,
-            "یادآوری تمدید اشتراک",
-            f"اشتراک شما تا {sub.expired_at.date()} اعتبار دارد."
-        )
-
-@shared_task
-def deactivate_expired():
-    """
-    اشتراک‌های منقضی را غیرفعال کن و نوتیف بده.
-    """
+def send_subscription_reminders():
+    ''' پیدا کردن اشتراک‌هایی که ۳ روز مونده به پایانشون  '''
     now = timezone.now()
-    expireds = Subscription.objects.filter(is_active=True, expired_at__lt=now)
-    for sub in expireds:
+    almost_expire = now + timezone.timedelta(days=3)
+    qs = Subscription.objects.filter(is_active=True, expire_at__date=almost_expire.date())
+    for sub in qs:
+        message = f"اشتراک شما در پلن {sub.plan.name} تا ۳ روز دیگر به پایان می‌رسد. لطفاً تمدید کنید."
+        if not Notification.objects.filter(user=sub.user, message__contains=sub.plan.name, created_at__date=now.date()).exists():
+            Notification.objects.create(user=sub.user, message=message)
+    expired = Subscription.objects.filter(is_active=True, expire_at__lt=now)
+    for sub in expired:
         sub.is_active = False
-        sub.save(update_fields=['is_active'])
-        send_fcm(sub.user, "اتمام اشتراک", "اشتراک شما به پایان رسید.")
-
+        sub.save()
+        Notification.objects.create(user=sub.user, message=f"اشتراک شما در پلن {sub.plan.name} به پایان رسید و دسترسی شما محدود شد.")

@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/', include('plants.urls')),
     path('api/users/', include('users.urls')),
     path('api/subscription/', include('subscription.urls')),
+    path('chat/', include('chat.urls')),
 
     path('fcm/', include('notifications.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
