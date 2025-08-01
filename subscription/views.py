@@ -130,6 +130,6 @@ class AdminStatsView(APIView):
         n_purchases = PaymentHistory.objects.filter(is_successful=True).count()
         n_active_subs = Subscription.objects.filter(is_active=True, expired_at__gte=timezone.now()).count()
         return Response({
-            "total_purchases": n_purchases,
-            "total_active_subscriptions": n_active_subs
+            "فهرست کلی اشتراک ها": n_purchases,
+            "اشتراک های فعال": n_active_subs
         })

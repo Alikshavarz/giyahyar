@@ -62,20 +62,36 @@ class VerifyPhoneView(APIView):
         return Response({"error": "کد نادرست یا منقضی."}, status=400)
 
 
+# class LoginView(APIView):
+#     permission_classes = [permissions.AllowAny]
+
+#     def post(self, request):
+#         data = request.data
+#         user = CustomUser.objects.filter(
+#             username=data.get('username_or_phone')
+#         ).first() or CustomUser.objects.filter(
+#             phone_number=data.get('username_or_phone')
+#         ).first()
+#         if not user:
+#             return Response({"error": "کاربر یافت نشد."}, status=404)
+#         if not user.check_password(data.get('password')):
+#             return Response({"error": "رمز اشتباه است."}, status=400)
+#         code = generate_otp()
+#         user.sms_code = code
+#         user.sms_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
+#         user.save()
+#         send_sms(user.phone_number, code)
+#         return Response({'message': 'کد تایید ورود پیامک شد.'})
+
+
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        data = request.data
-        user = CustomUser.objects.filter(
-            username=data.get('username_or_phone')
-        ).first() or CustomUser.objects.filter(
-            phone_number=data.get('username_or_phone')
-        ).first()
+        phone = request.data.get('phone_number')
+        user = CustomUser.objects.filter(phone_number=phone).first()
         if not user:
             return Response({"error": "کاربر یافت نشد."}, status=404)
-        if not user.check_password(data.get('password')):
-            return Response({"error": "رمز اشتباه است."}, status=400)
         code = generate_otp()
         user.sms_code = code
         user.sms_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
@@ -106,7 +122,8 @@ class LoginOTPVerify(APIView):
             })
         return Response({"error":"کد نادرست یا منقضی"}, status=400)
 
-from rest_framework.permissions import IsAuthenticated
+
+
 
 class AuthFeatureView(APIView):
     permission_classes = [IsAuthenticated]

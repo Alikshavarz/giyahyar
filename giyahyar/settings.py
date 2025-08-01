@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-from decouple import config, Csv #اضافه شده Csv برای خواندن لیست از فایل
+from decouple import config, Csv 
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = config('SECRET_KEY')
-
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'plants',
     'subscription',
     'notifications',
+    'chat',
 
 ]
 
@@ -95,7 +96,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # JWT (Simple JWT) Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -120,7 +121,7 @@ SIMPLE_JWT = {
 
     'JTI_CLAIM': 'jti',
 
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=10),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
