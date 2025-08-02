@@ -8,8 +8,10 @@ from django.utils import timezone
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework import generics, status
+from plants import serializers as PlantSerializer
 
-<<<<<<< HEAD
+
 class SubscriptionListCreateView(generics.ListCreateAPIView):
     serializer_class = SubscriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -22,11 +24,11 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
         except Plan.DoesNotExist:
             return Response({"detail": "پلن وجود ندارد."}, status=400)
         now = timezone.now()
-       
+
         subs = Subscription.objects.filter(user=request.user, is_active=True, expired_at__gt=now)
         if subs.exists():
             sub = subs.first()
-            
+
             sub.expired_at = sub.expired_at + timezone.timedelta(days=plan.duration_days)
             sub.plan = plan
             sub.last_payment_status = "success"
@@ -61,11 +63,11 @@ class SubscriptionDeleteView(generics.DestroyAPIView):
         send_fcm_notification(instance.user, "لغو اشتراک", "اشتراک شما غیرفعال شد.")
 
 class PlanListView(generics.ListAPIView):
-    serializer_class = PlanSerializer
+    serializer_class = PlantSerializer
     queryset = Plan.objects.filter(is_active=True)
-=======
+
+
 class PlansView(APIView):
->>>>>>> 6c5b6b8b89842baad0166e4bfff278410103adae
     permission_classes = [permissions.AllowAny]
     def get(self, request):
         plans = SubscriptionPlan.objects.filter(is_active=True)
@@ -83,12 +85,12 @@ class BuySubscriptionView(APIView):
         now = timezone.now()
         user = request.user
         active_sub = Subscription.objects.filter(user=user, is_active=True, expired_at__gte=now).last()
-        if active_sub:  
+        if active_sub:
             active_sub.expired_at += timezone.timedelta(days=plan.duration_days)
             active_sub.plan = plan
             active_sub.save()
             sub = active_sub
-        else: 
+        else:
             sub = Subscription.objects.create(
                 user=user,
                 plan=plan,
@@ -101,7 +103,7 @@ class BuySubscriptionView(APIView):
             user=user,
             plan=plan,
             amount=plan.price,
-            is_successful=True,  
+            is_successful=True,
             ref_id="TEST-" + str(sub.id)
         )
         Notification.objects.create(
@@ -145,10 +147,10 @@ class SendReminderView(APIView):
 class AdminPlansView(APIView):
     permission_classes = [IsAdminUser]
     def get(self, request):
-        plans = SubscriptionPlan.objects.all() 
+        plans = SubscriptionPlan.objects.all()
         return Response({"plans": SubscriptionPlanSerializer(plans, many=True).data})
 
-    def post(self, request): 
+    def post(self, request):
         s = SubscriptionPlanSerializer(data=request.data)
         if s.is_valid():
             plan = s.save()

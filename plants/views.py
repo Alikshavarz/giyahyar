@@ -51,10 +51,20 @@ class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
         except Plant.DoesNotExist:
             raise NotFound("گیاه پیدا نشد یا شما اجازه تشخیص آن را ندارید.")
 
-        user_diagnoses_count = PlantDiagnosis.objects.filter(plant__user=self.request.user).count()
+        uploaded_images = self.request.FILES.getlist('images')
+        if not uploaded_images:
+            raise DRFValidationError({"images": "حداقل یک تصویر برای تشخیص لازم است."})
 
 
-        diagnosis_instance = serializer.save(plant=plant)
+        diagnoses_count = PlantDiagnosis.objects.filter(plant__user=self.request.user).count()
+
+        if diagnoses_count >= 3:
+            raise DRFValidationError(
+                {"subscription": "شما به سقف 3 تشخیص رایگان رسیده‌اید. برای تشخیص‌های بیشتر، لطفاً اشتراک تهیه کنید."})
+
+        diagnosis_instance = serializer.save(plant=plant, image=uploaded_images[0])
+
+
 
         try:
             ai_service = PlantDiagnosisService(
@@ -89,7 +99,6 @@ class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
                     plant_details = best_suggestion.get('plant_details', {})
                     common_names = plant_details.get('common_names', [])
                     if common_names:
-
                         plant_name = common_names[0]
                     else:
                         plant_name = best_suggestion.get('plant_name', 'ناشناخته')

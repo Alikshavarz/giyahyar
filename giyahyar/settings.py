@@ -13,10 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
-<<<<<<< HEAD
 from decouple import config, Csv
 from dotenv import load_dotenv
-=======
 
 from decouple import config, Csv 
 
@@ -24,7 +22,6 @@ from decouple import config, Csv
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 from decouple import config, Csv 
->>>>>>> 6c5b6b8b89842baad0166e4bfff278410103adae
 
 
 load_dotenv()
@@ -35,12 +32,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 SECRET_KEY = config('SECRET_KEY')
-<<<<<<< HEAD
 
 AI_API_KEY = config('AI_API_KEY')
-=======
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
->>>>>>> 6c5b6b8b89842baad0166e4bfff278410103adae
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -69,11 +63,8 @@ INSTALLED_APPS = [
     'plants',
     'subscription',
     'notifications',
-<<<<<<< HEAD
-=======
     'chat',
 
->>>>>>> 6c5b6b8b89842baad0166e4bfff278410103adae
 ]
 
 MIDDLEWARE = [
@@ -102,11 +93,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # JWT (Simple JWT) Settings
 SIMPLE_JWT = {
-<<<<<<< HEAD
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-=======
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),
->>>>>>> 6c5b6b8b89842baad0166e4bfff278410103adae
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
