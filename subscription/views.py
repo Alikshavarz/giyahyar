@@ -9,7 +9,7 @@ from django.db.models import Count
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import generics, status
-from plants import serializers as PlantSerializer
+from plants import serializers as PlanSerializer
 
 
 class SubscriptionListCreateView(generics.ListCreateAPIView):
@@ -63,7 +63,7 @@ class SubscriptionDeleteView(generics.DestroyAPIView):
         send_fcm_notification(instance.user, "لغو اشتراک", "اشتراک شما غیرفعال شد.")
 
 class PlanListView(generics.ListAPIView):
-    serializer_class = PlantSerializer
+    serializer_class = PlanSerializer
     queryset = Plan.objects.filter(is_active=True)
 
 
