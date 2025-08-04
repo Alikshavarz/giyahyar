@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
 
 
-    # app_name
+    # app_names
     'users',
     'plants',
     'subscription',
