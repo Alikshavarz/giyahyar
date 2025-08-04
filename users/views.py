@@ -105,8 +105,13 @@ class LoginOTPVerify(APIView):
 
     def post(self, request):
         phone = request.data.get('phone_number')
+        username = request.data.get('username')
         code = request.data.get('sms_code')
-        user = CustomUser.objects.filter(phone_number=phone).first()
+        user = None
+        if phone:
+            user = CustomUser.objects.filter(phone_number=phone).first()
+        elif username:
+            user = CustomUser.objects.filter(username=username).first()
         if not user:
             return Response({"error": "کاربر پیدا نشد."}, status=404)
         if user.sms_code == code and user.sms_code_expiry and timezone.now() < user.sms_code_expiry:
@@ -154,3 +159,22 @@ class LogoutView(APIView):
             return Response({'message': 'با موفقیت خارج شدید'})
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
+
+
+class LoginWithUsernameView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        
+        user = CustomUser.objects.filter(username=username).first()
+        if not user:
+            return Response({"error": "کاربری با این نام کاربری یافت نشد."}, status=404)
+        code = generate_otp()
+        user.sms_code = code
+        user.sms_code_expiry = timezone.now() + timezone.timedelta(minutes=5)
+        user.save()
+        
+        send_sms(user.phone_number, code)
+        return Response({'message': 'کد تایید ورود پیامک شد.'})

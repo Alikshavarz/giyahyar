@@ -5,11 +5,9 @@ from .models import SubscriptionPlan, PaymentHistory, Subscription, Notification
 from .serializers import (
     SubscriptionPlanSerializer, PaymentHistorySerializer, SubscriptionSerializer, NotificationSerializer)
 from django.utils import timezone
-from django.db.models import Count
-from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework import generics, status
-from plants import serializers as PlanSerializer
+from rest_framework import generics
+
 
 
 class SubscriptionListCreateView(generics.ListCreateAPIView):
@@ -20,8 +18,8 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         plan_id = request.data.get("plan_id")
         try:
-            plan = Plan.objects.get(id=plan_id, is_active=True)
-        except Plan.DoesNotExist:
+            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
             return Response({"detail": "پلن وجود ندارد."}, status=400)
         now = timezone.now()
 
@@ -42,12 +40,11 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
 
         expired_at = now + timezone.timedelta(days=plan.duration_days)
         sub = Subscription.objects.create(
-            user=request.user, plan=plan, started_at=now, expired_at=expired_at,
-            is_active=True, auto_renew=False, last_payment_status="success"
+            user=request.user, plan=plan, start_at=now, expired_at=expired_at,
+            is_active=True
         )
         PaymentHistory.objects.create(
-            user=request.user, subscription=sub, plan_name=plan.name, amount=plan.price,
-            status="success", description=f"خرید {plan.name}"
+            user=request.user, plan=plan, amount=plan.price, is_successful=True, ref_id="TEST-" + str(sub.id)
         )
         send_fcm_notification(request.user, "خرید موفق اشتراک", f"{plan.name} برای شما فعال شد.")
         return Response(SubscriptionSerializer(sub).data, status=201)
@@ -63,8 +60,8 @@ class SubscriptionDeleteView(generics.DestroyAPIView):
         send_fcm_notification(instance.user, "لغو اشتراک", "اشتراک شما غیرفعال شد.")
 
 class PlanListView(generics.ListAPIView):
-    serializer_class = PlanSerializer
-    queryset = Plan.objects.filter(is_active=True)
+    serializer_class = SubscriptionPlanSerializer
+    queryset = SubscriptionPlan.objects.filter(is_active=True)
 
 
 class PlansView(APIView):

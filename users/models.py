@@ -8,6 +8,7 @@ class CustomUser(AbstractUser):
     feature_usage_count = models.PositiveIntegerField(default=0)  
     sms_code = models.CharField(max_length=5, blank=True, null=True)
     sms_code_expiry = models.DateTimeField(blank=True, null=True)
+    REQUIRED_FIELDS = ['phone_number', 'email']
 
     def reset_usage_count(self):
         self.feature_usage_count = 0
