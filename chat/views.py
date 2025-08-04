@@ -6,14 +6,15 @@ from django.conf import settings
 from .models import Message
 from .serializers import MessageSerializer
 
-GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro:generateContent'
 
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-002:generateContent"
 
 CUSTOM_PROMPT = (
+    "توی پیام ها تا زمانی که از تو خواسته نشده نگو کی هستی"
     "تو هوش مصنوعی مخصوص اپلیکیشن گیاه یار هستی. "
     "خودت را هرگز Gemini یا هیچ مدل دیگر هوش مصنوعی معرفی نکن! "
-    "در هر پاسخی، فقط بگو من هوش مصنوعی گیاه یار هستم یا من برای کمک به شما اینجا هستم."
     "تو توسط تیم برنامه نویسی نکست لول در ایران ساخته شدی"
+    "گیاه یار یک اپ برای نگهداری و مراقبت گل و گیاهان است"
 )
 
 class ChatAPIView(APIView):
