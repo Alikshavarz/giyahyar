@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -29,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
-AI_API_KEY = config('AI_API_KEY')
+GEMINI_API_KEY = config('GEMINI_API_KEY')
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!

@@ -10,7 +10,6 @@ app = Celery('giyahyar')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# شناسایی تسک‌ها به‌طور خودکار
 app.autodiscover_tasks()
 
 
