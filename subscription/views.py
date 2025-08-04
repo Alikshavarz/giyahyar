@@ -8,6 +8,64 @@ from django.utils import timezone
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework import generics, status
+from plants import serializers as PlanSerializer
+
+
+class SubscriptionListCreateView(generics.ListCreateAPIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user).order_by('-started_at')
+    def create(self, request, *args, **kwargs):
+        plan_id = request.data.get("plan_id")
+        try:
+            plan = Plan.objects.get(id=plan_id, is_active=True)
+        except Plan.DoesNotExist:
+            return Response({"detail": "پلن وجود ندارد."}, status=400)
+        now = timezone.now()
+
+        subs = Subscription.objects.filter(user=request.user, is_active=True, expired_at__gt=now)
+        if subs.exists():
+            sub = subs.first()
+
+            sub.expired_at = sub.expired_at + timezone.timedelta(days=plan.duration_days)
+            sub.plan = plan
+            sub.last_payment_status = "success"
+            sub.save()
+            PaymentHistory.objects.create(
+                user=request.user, subscription=sub, plan_name=plan.name, amount=plan.price,
+                status="success", description=f"تمدید {plan.name}"
+            )
+            send_fcm_notification(request.user, "تمدید موفق اشتراک", f"اشتراک {plan.name} شما تا {sub.expired_at:%Y-%m-%d} تمدید شد.")
+            return Response(SubscriptionSerializer(sub).data, status=201)
+
+        expired_at = now + timezone.timedelta(days=plan.duration_days)
+        sub = Subscription.objects.create(
+            user=request.user, plan=plan, started_at=now, expired_at=expired_at,
+            is_active=True, auto_renew=False, last_payment_status="success"
+        )
+        PaymentHistory.objects.create(
+            user=request.user, subscription=sub, plan_name=plan.name, amount=plan.price,
+            status="success", description=f"خرید {plan.name}"
+        )
+        send_fcm_notification(request.user, "خرید موفق اشتراک", f"{plan.name} برای شما فعال شد.")
+        return Response(SubscriptionSerializer(sub).data, status=201)
+
+class SubscriptionDeleteView(generics.DestroyAPIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user, is_active=True)
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save()
+        send_fcm_notification(instance.user, "لغو اشتراک", "اشتراک شما غیرفعال شد.")
+
+class PlanListView(generics.ListAPIView):
+    serializer_class = PlanSerializer
+    queryset = Plan.objects.filter(is_active=True)
+
 
 class PlansView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -27,12 +85,12 @@ class BuySubscriptionView(APIView):
         now = timezone.now()
         user = request.user
         active_sub = Subscription.objects.filter(user=user, is_active=True, expired_at__gte=now).last()
-        if active_sub:  
+        if active_sub:
             active_sub.expired_at += timezone.timedelta(days=plan.duration_days)
             active_sub.plan = plan
             active_sub.save()
             sub = active_sub
-        else: 
+        else:
             sub = Subscription.objects.create(
                 user=user,
                 plan=plan,
@@ -45,7 +103,7 @@ class BuySubscriptionView(APIView):
             user=user,
             plan=plan,
             amount=plan.price,
-            is_successful=True,  
+            is_successful=True,
             ref_id="TEST-" + str(sub.id)
         )
         Notification.objects.create(
@@ -89,10 +147,10 @@ class SendReminderView(APIView):
 class AdminPlansView(APIView):
     permission_classes = [IsAdminUser]
     def get(self, request):
-        plans = SubscriptionPlan.objects.all() 
+        plans = SubscriptionPlan.objects.all()
         return Response({"plans": SubscriptionPlanSerializer(plans, many=True).data})
 
-    def post(self, request): 
+    def post(self, request):
         s = SubscriptionPlanSerializer(data=request.data)
         if s.is_valid():
             plan = s.save()

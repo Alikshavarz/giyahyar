@@ -12,6 +12,7 @@ class NotificationsConfig(AppConfig):
         self.initialize_firebase()
 
     def initialize_firebase(self):
+
         try:
             import firebase_admin
             from firebase_admin import credentials
@@ -21,13 +22,13 @@ class NotificationsConfig(AppConfig):
             if not firebase_admin._apps:
                 cred = credentials.Certificate(cred_path)
                 firebase_admin.initialize_app(cred)
-                logger.info("✅ Firebase Admin SDK initialized successfully.")
+                logger.info("✅ Firebase Admin SDK با موفقیت مقداردهی اولیه شد.")
             else:
-                logger.info("🔄 Firebase Admin SDK was already initialized.")
+                logger.info("🔄 Firebase Admin SDK قبلاً مقداردهی اولیه شده است.")
 
         except ImportError:
-            logger.error("❌ The 'firebase-admin' library is not installed. Run: pip install firebase-admin")
+            logger.error("❌ کتابخانه 'firebase-admin' نصب نیست. لطفا اجرا کنید: pip install firebase-admin")
         except FileNotFoundError:
-            logger.error(f"❌ Credential file not found at: {cred_path}")
+            logger.error(f"❌ فایل اعتبارسنجی در مسیر: {cred_path} یافت نشد.")
         except Exception as e:
-            logger.error(f"🔥 Failed to initialize Firebase Admin SDK: {e}")
+            logger.error(f"🔥 خطایی در مقداردهی اولیه Firebase Admin SDK رخ داد: {e}")

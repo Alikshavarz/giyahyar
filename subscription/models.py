@@ -5,7 +5,7 @@ from django.utils import timezone
 class SubscriptionPlan(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
-    price = models.PositiveIntegerField()  
+    price = models.PositiveIntegerField()
     duration_days = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
 

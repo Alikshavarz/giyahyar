@@ -14,26 +14,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
-
-from decouple import config, Csv 
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-from decouple import config, Csv 
+from decouple import config, Csv
+from dotenv import load_dotenv
 
 
+# Load environment variables from .env file
+load_dotenv()
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
+
+AI_API_KEY = config('AI_API_KEY')
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
@@ -66,8 +66,6 @@ INSTALLED_APPS = [
 
 ]
 
-
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -78,16 +76,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-  
 }
 
-
-# تنظیمات Celery
+# Celery settings
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -97,7 +92,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # JWT (Simple JWT) Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -149,30 +144,18 @@ WSGI_APPLICATION = 'giyahyar.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
-
-'default': {
-
-'ENGINE': 'django.db.backends.postgresql',
-
-'NAME': 'giyahyar_db',
-
-'USER': 'giyahyar',
-
-'PASSWORD': 'newgiyahyar11',
-
-'HOST': 'localhost',
-
-'PORT': '5432',
-
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'giyahyar_db',
+        'USER': 'giyahyar',
+        'PASSWORD': 'newgiyahyar11',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -220,24 +203,63 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FIREBASE_CREDENTIAL_PATH = config('FIREBASE_CREDENTIAL_PATH', default='')
 FCM_SERVER_KEY = config('FCM_SERVER_KEY', default='')
+FIREBASE_ADMIN_SDK_PATH = os.path.join(BASE_DIR, 'firebase', 'giyahyar-9eeca-firebase-adminsdk-fbsvc-4e41e5aeda.json')
+
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
     },
     'loggers': {
+        'notifications': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'notifications.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'notifications.tasks': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'notifications.firebase_service': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'plants.services.ai_diagnosis_service': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': True,
         },
-        'django.request': {
+        '': {
             'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+            'level': 'INFO',
         },
-    },
+    }
 }
