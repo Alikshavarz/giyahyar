@@ -203,3 +203,12 @@ class WateringScheduleListCreateView(generics.ListCreateAPIView):
 
 
 
+
+
+
+
+
+
+
+
+
