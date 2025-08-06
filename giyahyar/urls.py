@@ -24,12 +24,12 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('plants.urls')),
-    path('api/users/', include('users.urls')),
-    path('api/subscription/', include('subscription.urls')),
+    path('plants/', include('plants.urls')),
+    path('users/', include('users.urls')),
+    path('subscription/', include('subscription.urls')),
     path('chat/', include('chat.urls')),
-
     path('fcm/', include('notifications.urls')),
+    
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
