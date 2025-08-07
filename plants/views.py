@@ -11,6 +11,7 @@ from django.conf import settings
 # ======================================================
 # لیست‌گیری و ایجاد گیاه جدید
 class PlantListCreateView(generics.ListCreateAPIView):
+    queryset = Plant.objects.all()
     serializer_class = PlantSerializer
     permission_classes = [IsAuthenticated]
 
@@ -23,6 +24,7 @@ class PlantListCreateView(generics.ListCreateAPIView):
 
 # ======================================================
 class PlantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Plant.objects.all()
     serializer_class = PlantSerializer
     permission_classes = [IsAuthenticated]
 
@@ -37,6 +39,7 @@ class PlantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 # ======================================================
 # آپلود تصویر گیاه و انجام تشخیص خودکار با هوش مصنوعی
 class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
+    queryset = PlantDiagnosis.objects.all()
     serializer_class = PlantDiagnosisSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
@@ -133,6 +136,7 @@ class PlantDiagnosisCreateWithAIView(generics.CreateAPIView):
 # ======================================================
 # لیست‌گیری تشخیص‌های گیاهان کاربر
 class PlantDiagnosisListView(generics.ListAPIView):
+    queryset = PlantDiagnosis.objects.all()
     serializer_class = PlantDiagnosisSerializer
     permission_classes = [IsAuthenticated]
 
@@ -143,6 +147,7 @@ class PlantDiagnosisListView(generics.ListAPIView):
 # ======================================================
 # مشاهده، ویرایش یا حذف یک تشخیص خاص
 class PlantDiagnosisRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PlantDiagnosis.objects.all()
     serializer_class = PlantDiagnosisSerializer
     permission_classes = [IsAuthenticated]
 
@@ -157,6 +162,7 @@ class PlantDiagnosisRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIV
 # ======================================================
 # آبیاری جدید رو ثبت میکنه
 class WateringLogCreateView(generics.CreateAPIView):
+    queryset = WateringLog.objects.all()
     serializer_class = WateringLogSerializer
     permission_classes = [IsAuthenticated]
 
@@ -183,9 +189,13 @@ class WateringLogListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return WateringLog.objects.none()
+
         plant_id = self.kwargs.get('pk')
         if not plant_id:
             raise DRFValidationError("شناسه گیاه (Plant ID) برای مشاهده تاریخچه آبیاری در URL الزامی است.")
+
         return WateringLog.objects.filter(plant__id=plant_id, plant__user=self.request.user).order_by('-watered_at')
 
 
@@ -200,8 +210,6 @@ class WateringScheduleListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         plant = serializer.validated_data['plant']
-
-
 
 
 

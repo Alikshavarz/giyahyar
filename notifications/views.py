@@ -117,7 +117,6 @@ class SendFCMNotificationView(generics.CreateAPIView):
                 notification_logger.error(
                     f"❌ ارسال FCM به توکن '{device.registration_id}' کاربر '{request.user.username}' ناموفق بود: {error_msg}"
                 )
-                # اگر خطا نشان‌دهنده یک توکن نامعتبر/منقضی شده است، آن را غیرفعال کنید.
                 if error_msg and (
                         "InvalidRegistrationToken" in error_msg or "NotRegistered" in error_msg or "BadDeviceToken" in error_msg):
                     device.is_active = False
@@ -138,4 +137,3 @@ class SendFCMNotificationView(generics.CreateAPIView):
 
 
 
-# -----------------------------------------
