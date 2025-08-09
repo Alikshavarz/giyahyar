@@ -17,6 +17,8 @@ cron-descriptor==1.4.5
 cryptography==45.0.6
 Django==5.2.5
 django-celery-beat==2.8.1
+django-cors-headers==4.7.0
+django-cron==0.6.0
 django-phonenumber-field==8.1.0
 django-timezone-field==7.1
 djangorestframework==3.16.0
