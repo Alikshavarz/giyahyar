@@ -1,13 +1,6 @@
 amqp==5.3.1
-<<<<<<< HEAD
 anyio==4.10.0
 asgiref==3.9.1
-=======
-annotated-types==0.7.0
-anyio==4.9.0
-asgiref==3.9.0
-asttokens==3.0.0
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 billiard==4.2.1
 CacheControl==0.14.3
 cachetools==5.5.2
@@ -21,37 +14,22 @@ click-plugins==1.1.1.2
 click-repl==0.3.0
 colorama==0.4.6
 cron-descriptor==1.4.5
-<<<<<<< HEAD
 cryptography==45.0.6
 Django==5.2.5
-=======
-cryptography==45.0.5
-decorator==5.2.1
-distro==1.9.0
-Django==5.2.1
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 django-celery-beat==2.8.1
-django-cron==0.6.0
 django-phonenumber-field==8.1.0
 django-timezone-field==7.1
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.1
 dotenv==0.9.9
 drf-yasg==1.21.10
-<<<<<<< HEAD
 firebase_admin==7.1.0
-=======
-executing==2.2.0
-firebase-admin==6.9.0
-google-ai-generativelanguage==0.6.15
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 google-api-core==2.25.1
 google-auth==2.40.3
 google-cloud-core==2.4.3
 google-cloud-firestore==2.21.0
 google-cloud-storage==3.2.0
 google-crc32c==1.7.1
-google-generativeai==0.8.5
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
 grpcio==1.74.0
@@ -64,21 +42,8 @@ httpx==0.28.1
 hyperframe==6.1.0
 idna==3.10
 inflection==0.5.1
-<<<<<<< HEAD
-=======
-ipython==4.0.0
-ipython_pygments_lexers==1.1.1
-jedi==0.19.2
-jiter==0.10.0
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 kombu==5.5.4
 msgpack==1.1.1
-<<<<<<< HEAD
-=======
-numpy==2.2.3
-openai==1.97.0
-opencv-python==4.11.0.86
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 packaging==25.0
 phonenumbers==9.0.10
 pillow==11.3.0
@@ -89,12 +54,6 @@ psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
-<<<<<<< HEAD
-=======
-pydantic==2.11.7
-pydantic_core==2.33.2
-Pygments==2.19.1
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 PyJWT==2.10.1
 python-crontab==3.3.0
 python-dateutil==2.9.0.post0
@@ -107,17 +66,9 @@ rsa==4.9.1
 six==1.17.0
 sniffio==1.3.1
 sqlparse==0.5.3
-<<<<<<< HEAD
-=======
-stack-data==0.6.3
-tqdm==4.67.1
-traitlets==5.14.3
-typing-inspection==0.4.1
->>>>>>> f185c34fa00f0fde27dbefba7323e170103a4f41
 typing_extensions==4.14.1
 tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
 vine==5.1.0
 wcwidth==0.2.13
-
